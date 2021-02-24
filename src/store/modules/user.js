@@ -4,17 +4,47 @@ import { resetRouter } from '@/router'
 
 const getDefaultState = () => {
   return {
-    token: getToken(),
-    name: '',
-    avatar: ''
+    token: getToken(),  //用户登录成功的token
+    name: '', //获取用户信息保存用户信息的名称
+    avatar: '' //获取用户信息保存用户信息的头像
   }
 }
 
 const state = getDefaultState()
 
+// const state = {
+//   token: getToken(),
+//   name: '',
+//   avatar: ''
+// }
+
 const mutations = {
   RESET_STATE: (state) => {
+    //  Object.assign合并后面的对象的属性 到 前面的对象当中
     Object.assign(state, getDefaultState())
+    // state
+    // {
+    //   token: getToken(),  //用户登录成功的token
+    //   name: 'admin', //获取用户信息保存用户信息的名称
+    //   avatar: 'xxx' //获取用户信息保存用户信息的头像
+    // }
+    // getDefaultState()
+    // {
+    //   token: getToken(),  //用户登录成功的token
+    //   name: '', //获取用户信息保存用户信息的名称
+    //   avatar: '' //获取用户信息保存用户信息的头像
+    // }
+
+    // state:{
+    //   token: getToken(),  //用户登录成功的token
+    //   name: '', //获取用户信息保存用户信息的名称
+    //   avatar: '' //获取用户信息保存用户信息的头像
+    // }
+    
+    //退出登录后把state当中的token及用户信息清空，上面一行代码就是这样
+    // state.token = ''
+    // state.name = ''
+    // state.avatar = ''
   },
   SET_TOKEN: (state, token) => {
     state.token = token
@@ -29,19 +59,32 @@ const mutations = {
 
 const actions = {
   // user login
-  login({ commit }, userInfo) {
-    const { username, password } = userInfo
-    return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
-        const { data } = response
-        commit('SET_TOKEN', data.token)
-        setToken(data.token)
-        resolve()
-      }).catch(error => {
-        reject(error)
-      })
-    })
+  // 我们之前写的async和await 它没有用，直接.then和.catch
+  // login({ commit }, userInfo) {
+  //   const { username, password } = userInfo
+  //   return new Promise((resolve, reject) => {
+  //     login({ username: username.trim(), password: password }).then(response => {
+  //       const { data } = response
+  //       commit('SET_TOKEN', data.token)
+  //       setToken(data.token) //原来咱们是把获取到的token保存在localStorage，而这里它是保存在cookies当中
+  //       resolve()
+  //     }).catch(error => {
+  //       reject(error)
+  //     })
+  //   })
+  // },
+
+  async login({commit},userInfo){
+    const result = await login(userInfo)
+    if(result.code === 20000){
+      commit('SET_TOKEN', result.data.token)
+      setToken(result.data.token)
+      return 'ok'
+    }else{
+      return Promise.reject(new Error('failed'))
+    }
   },
+
 
   // get user info
   getInfo({ commit, state }) {
@@ -64,12 +107,15 @@ const actions = {
     })
   },
 
+
+
+
   // user logout
   logout({ commit, state }) {
     return new Promise((resolve, reject) => {
       logout(state.token).then(() => {
-        removeToken() // must remove  token  first
-        resetRouter()
+        removeToken() // 把cookies内部的token删除掉
+        resetRouter() // 退出之后重置路由器
         commit('RESET_STATE')
         resolve()
       }).catch(error => {
