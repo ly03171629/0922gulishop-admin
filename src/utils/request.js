@@ -8,7 +8,7 @@ const service = axios.create({
   // process.env 会根据你现在所处于的环境（开发环境还是生产环境），自动的去选择VUE_APP_BASE_API值
   //.env.development  .env.production从这两个对应去拿VUE_APP_BASE_API值
   
-  baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
+  baseURL: process.env.VUE_APP_BASE_API, // '/dev-api'
   // withCredentials: true, // send cookies when cross-domain requests
   timeout: 5000 // request timeout
 })

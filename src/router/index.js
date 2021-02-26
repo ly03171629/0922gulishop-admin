@@ -59,7 +59,7 @@ export const constantRoutes = [
   {
     path:'/product',  //一级路由组件只有两个要么是登录login组件  要么就是layout组件
     component: Layout, //显示一级路由组件架子，并且立马重定向二级路由组件
-    name:'Product',
+    name:'Product', //name必须写，而且必须写的是路径的首字母大写。因为后面权限要用
     redirect: '/product/trademark/list',
     meta: { title: '商品管理', icon: 'el-icon-s-shop' },
     children:[
