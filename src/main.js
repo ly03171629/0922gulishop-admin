@@ -24,6 +24,10 @@ import '@/permission' //  引入token校验相关（和权限也有关系）
 
 
 import * as API from '@/api/product'
+import CategorySelector from '@/components/CategorySelector'
+
+Vue.component('CategorySelector',CategorySelector)
+
 Vue.prototype.$API = API
 // {
 //   trademark,

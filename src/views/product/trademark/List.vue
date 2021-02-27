@@ -88,28 +88,31 @@
       :page-size="limit"
       :total="total"
       :pager-count="5"
-      :page-sizes="[3, 5, 10]"
-      layout="prev, pager, next, jumper,->,sizes,total"
       @current-change="getTrademarkList"
+      :page-sizes="[3, 5, 10]"
       @size-change="handleSizeChange"
+      layout="prev, pager, next, jumper,->,sizes,total"
     >
     </el-pagination>
 
     <!-- 点击添加或点击修改弹出的对话框页面 
     写静态页面的时候把东西复制过来，先把内部所有的动态数据删除掉-->
-    <el-dialog title="添加品牌" :visible.sync="dialogFormVisible">
-      <el-form style="width: 80%" :model="tmForm">
+    <el-dialog
+      :title="tmForm.id ? '修改品牌' : '添加品牌'"
+      :visible.sync="dialogFormVisible"
+    >
+      <el-form style="width: 80%" :model="tmForm" :rules="rules" ref="tmForm">
         <!-- el-form代表的是表单
         表单里面是表单项
             每个表单项都可以通过label-width设置表单项名称的宽度
             每个表单项都可以通过label设置表单项名称
         form当中都会写：model="对象" 作用：1、以后用来去对这个form表单验证 2、用来标识这个form收集的数据收集到哪
         -->
-        <el-form-item label="品牌名称" label-width="100px">
+        <el-form-item label="品牌名称" label-width="100px" prop="tmName">
           <el-input autocomplete="off" v-model="tmForm.tmName"></el-input>
         </el-form-item>
 
-        <el-form-item label="品牌LOGO" label-width="100px">
+        <el-form-item label="品牌LOGO" label-width="100px" prop="logoUrl">
           <!-- 在拷贝upload组件的时候，把html  css   js相关的东西全拷贝 -->
           <!-- action 控制的是上传的接口地址 -->
           <!-- 上传图片分为两步：
@@ -138,7 +141,7 @@
             <img v-if="tmForm.logoUrl" :src="tmForm.logoUrl" class="avatar" />
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
             <div class="el-upload__tip" slot="tip">
-              只能上传jpg/png文件，且不超过500kb
+              只能上传jpg文件，且不超过2M
             </div>
           </el-upload>
         </el-form-item>
@@ -157,6 +160,16 @@
 export default {
   name: "Trademark",
   data() {
+    var validateTmName = (rule, value, callback) => {
+      //value 就是后期要验证的用户输入的数据
+      //callback 是一个回调函数，如果callback调用的时候传递了参数，代表验证失败，如果没有传递参数，代表验证成功
+      if (value.length < 2 || value.length > 20) {
+        callback(new Error("tmName长度必须是2-20之间"));
+      } else {
+        callback()
+      }
+    };
+
     return {
       page: 1,
       limit: 3,
@@ -170,6 +183,27 @@ export default {
         tmName: "", //收集我们的品牌名称
         logoUrl: "", //收集我们的品牌logo图片路径
       }, //用来收集数据的
+
+      rules: {
+        //规则
+        //每个要验证的字段规则都是一个数组
+        //数组里面是对象，每一个对象就代表是验证的一个规则
+        //每个规则对象里面包含三个东西：1、规则 2、错误提示信息 3、触发时机（验证时机）
+        //触发时机：一共有三个  失去焦点的时候blur  内容改变的时候change  整体验证的时候
+        tmName: [
+          { required: true, message: "请输入品牌名称", trigger: "blur" },
+          // {
+          //   min: 2,
+          //   max: 10,
+          //   message: "长度在 2 到 10 个字符",
+          //   trigger: "change",
+          // },
+          { validator: validateTmName, trigger: "change" }, //自定义校验规则
+        ],
+        logoUrl: [
+          { required: true, message: "请上传图片" }, //这个触发是在整体验证的时候触发
+        ],
+      },
     };
   },
   mounted() {
@@ -283,26 +317,37 @@ export default {
     },
 
     //点击确定按钮发请求添加或者修改品牌
-    async addOrUpdateTrademark() {
-      //获取参数
-      let trademark = this.tmForm; //tmForm就是咱们添加或者修改最终收集到的品牌数据
-      //整理参数 一般是我们的参数数据不符合咱们请求的参数格式，那么就需要整理
-      //发请求
-      try {
-        //成功干啥
-        await this.$API.trademark.addOrUpdate(trademark);
-        //1、提示
-        this.$message.success(trademark.id ? "修改品牌成功" : "添加品牌成功");
-        //2、关闭dialog,回到列表页
-        this.dialogFormVisible = false;
-        //3、重新发请求获取列表页数据
-        // 如果添加成功，那么重新请求的是第一页数据，添加新的数据是在最后一页
-        // 如果是修改成功，那么我们得重新请求这条数据所在的页
-        this.getTrademarkList(trademark.id ? this.page : 1);
-      } catch (error) {
-        //失败干啥
-        this.$message.error(trademark.id ? "修改品牌失败" : "添加品牌失败");
-      }
+    addOrUpdateTrademark() {
+      //整体验证
+      this.$refs.tmForm.validate(async (valid) => {
+        if (valid) {
+          //获取参数
+          let trademark = this.tmForm; //tmForm就是咱们添加或者修改最终收集到的品牌数据
+          //整理参数 一般是我们的参数数据不符合咱们请求的参数格式，那么就需要整理
+
+          //发请求
+          try {
+            //成功干啥
+            await this.$API.trademark.addOrUpdate(trademark);
+            //1、提示
+            this.$message.success(
+              trademark.id ? "修改品牌成功" : "添加品牌成功"
+            );
+            //2、关闭dialog,回到列表页
+            this.dialogFormVisible = false;
+            //3、重新发请求获取列表页数据
+            // 如果添加成功，那么重新请求的是第一页数据，添加新的数据是在最后一页
+            // 如果是修改成功，那么我们得重新请求这条数据所在的页
+            this.getTrademarkList(trademark.id ? this.page : 1);
+          } catch (error) {
+            //失败干啥
+            this.$message.error(trademark.id ? "修改品牌失败" : "添加品牌失败");
+          }
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
     },
     //点击删除按钮，删除对应的品牌
     deleteTrademark(row) {
@@ -317,7 +362,7 @@ export default {
           try {
             await this.$API.trademark.delete(row.id);
             //1、删除成功后提示
-            this.$message.success('删除品牌成功')
+            this.$message.success("删除品牌成功");
             // this.$message({
             //   type: "success",
             //   message: "删除成功!",
@@ -325,9 +370,11 @@ export default {
             //2、重新发请求获取列表数据
             // 正常删除哪个数据回到的还是哪个数据所在的页面
             // 假设删除数据的那一页只有一条数据，我们需要回到前一页，而不是数据当前页
-            this.getTrademarkList(this.trademarkList.length > 1?this.page:this.page - 1)
+            this.getTrademarkList(
+              this.trademarkList.length > 1 ? this.page : this.page - 1
+            );
           } catch (error) {
-            this.$message.error('删除品牌失败')
+            this.$message.error("删除品牌失败");
           }
         })
         .catch(() => {
