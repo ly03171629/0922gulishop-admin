@@ -20,7 +20,6 @@
           <el-option :label="c3.name" :value="c3.id" v-for="(c3,index) in category3List" :key="c3.id"></el-option>
         </el-select>
       </el-form-item>
-      
     </el-form>
   </div>
 </template>

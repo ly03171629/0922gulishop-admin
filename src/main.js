@@ -25,8 +25,10 @@ import '@/permission' //  引入token校验相关（和权限也有关系）
 
 import * as API from '@/api/product'
 import CategorySelector from '@/components/CategorySelector'
+import HintButton from '@/components/HintButton'
 
 Vue.component('CategorySelector',CategorySelector)
+Vue.component('HintButton',HintButton)
 
 Vue.prototype.$API = API
 // {
