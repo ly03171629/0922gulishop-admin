@@ -57,13 +57,17 @@
       <div v-show="!isShowList">
         <el-form :inline="true" :model="attrForm">
           <el-form-item label="属性名">
-            <el-input placeholder="请输入属性名" v-model="attrForm.attrName"></el-input>
+            <el-input
+              placeholder="请输入属性名"
+              v-model="attrForm.attrName"
+            ></el-input>
           </el-form-item>
         </el-form>
 
-        <el-button type="primary" icon="el-icon-plus" @click="addAttrValue">添加属性值</el-button>
+        <el-button type="primary" icon="el-icon-plus" @click="addAttrValue"
+          >添加属性值</el-button
+        >
         <el-button @click="isShowList = true">取消</el-button>
-
 
         <!-- 这个table是为了展示收集的属性值的列表
         收集属性名成很好收集，上面用的是v-model用户输入就直接可以收集
@@ -72,17 +76,47 @@
         当要收集属性值的时候，用了一个占位的思想，先往数组里面添加一个属性值对象，只不过属性值的名称此时是空的
         但是，一旦添加这个属性值对象，表格当中都会出现一行，我们可以输入框再去给刚才添加的属性值对象，收集名称
         -->
-        <el-table border style="width: 100%; margin: 20px 0" :data="attrForm.attrValueList">
+        <el-table
+          border
+          style="width: 100%; margin: 20px 0"
+          :data="attrForm.attrValueList"
+        >
           <el-table-column type="index" label="序号" align="center" width="80">
           </el-table-column>
           <el-table-column prop="prop" label="属性值名称" width="width">
-            <template slot-scope="{row,$index}">
-              <el-input v-model="row.valueName" placeholder="请输入属性值名称"></el-input>              
+            <template slot-scope="{ row, $index }">
+              <el-input
+                :ref="$index"
+                size="mini"
+                v-if="row.isEdit"
+                v-model="row.valueName"
+                placeholder="请输入属性值名称"
+                @blur="toLook(row)"
+                @keyup.enter.native="toLook(row)"
+              ></el-input>
+              <span
+                v-else
+                @click="toEdit(row, $index)"
+                style="display: block; width: 100%"
+                >{{ row.valueName }}</span
+              >
             </template>
           </el-table-column>
           <el-table-column prop="prop" label="操作" width="width">
-            <template slot-scope="{row,$index}">
-              <HintButton type="danger" icon="el-icon-delete" title="删除属性值" size="mini"></HintButton>
+            <template slot-scope="{ row, $index }">
+              <el-popconfirm
+                :title="`你确定要删除${row.valueName}这个属性值吗？`"
+                @onConfirm="attrForm.attrValueList.splice($index,1)"
+              >
+                <!-- onConfirm点击气泡确认框的确定按钮，会触发一个事件，事件名称是onConfirm，官网写错了 -->
+                <HintButton
+                  slot="reference"
+                  type="danger"
+                  icon="el-icon-delete"
+                  title="删除属性值"
+                  size="mini"
+                ></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -95,7 +129,7 @@
 </template>
 
 <script>
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from "lodash/cloneDeep";
 
 export default {
   name: "Attr",
@@ -108,9 +142,10 @@ export default {
 
       isShowList: true,
 
-      attrForm:{ 
-        attrName: "",  //属性名称
-        attrValueList: [ //属性中的属性值列表
+      attrForm: {
+        attrName: "", //属性名称
+        attrValueList: [
+          //属性中的属性值列表
           // {
           //   attrId: 0,
           //   id: 0,
@@ -121,6 +156,7 @@ export default {
         // 以后都要记住，data当中不能使用this，获取data当中的另外一个数据，因为data数据是一个对象，初始化的时候，谁先谁后不一定
         categoryId: 0,
         categoryLevel: 3,
+        // id:0
       },
     };
   },
@@ -158,12 +194,13 @@ export default {
     //点击添加按钮显示添加的页面
     showAddDiv() {
       this.isShowList = false;
-      
+
       //每次打开添加属性的页面得把收集的数据重置
       //在这里我们可以顺便收集categoryId
-      this.attrForm = { 
-        attrName: "",  //属性名称
-        attrValueList: [ //属性中的属性值列表
+      this.attrForm = {
+        attrName: "", //属性名称
+        attrValueList: [
+          //属性中的属性值列表
           // {
           //   attrId: 0,
           //   id: 0,
@@ -172,22 +209,75 @@ export default {
         ],
         categoryId: this.category3Id, //收集的属性内部这个id是3级id
         categoryLevel: 3,
-      }
+      };
     },
     //点击添加属性值
-    addAttrValue(){
+    addAttrValue() {
       this.attrForm.attrValueList.push({
         attrId: this.attrForm.id, //这个id代表的是属性值所属属性的id,有id就是修改页面，没有就增加页面undefined
         // id: 0, 新添加属性值没有id
         valueName: "", //一会需要用户输入的属性值名称
-      })
+        isEdit: true, //这个属性值标识着这个属性值的模式是编辑模式，每个属性值都有这个属性要么是true要么是false
+      });
+
+      //让新添加的这个属性值input自动获取焦点
+      //新添加的永远是最后一个
+      this.$nextTick(() => {
+        this.$refs[this.attrForm.attrValueList.length - 1].focus();
+      });
     },
     //点击修改属性按钮显示修改属性的页面
-    showUpdateDiv(row){
-      this.isShowList = false
+    showUpdateDiv(row) {
+      this.isShowList = false;
       // this.attrForm = {...row}//这次这里使用浅拷贝，没办法，因为内部数组是一个对象类型，浅拷拷的还是地址，数组用的还是同一个
-      this.attrForm = cloneDeep(row)
-    }
+      this.attrForm = cloneDeep(row);
+      //这里代表修改属性，修改属性的时候，属性当中已经存在了一些属性值，这些属性值我们也得添加模式
+      // this.attrForm.attrValueList.forEach(item => item.isEdit = false)
+
+      // 这里使用item.isEdit = false给每个属性值添加属性，不是响应式属性
+      // vue当中对数据进行数据监视的时候，只是一开始对数据里面的所有属性做了响应式
+      // Object.defineProperty对data当中的每个属性都做了getter和setter做了响应式
+      // 但是如果不是一开始就有的属性，不会做监视，既然没做监视，后期添加的这个属性就不是响应式属性
+      // 不是响应式属性，那么后期这个属性值改变，页面是不会改变的
+      // this.$set 或者 Vue.set 为响应式对象添加新属性才是响应式属性
+      this.attrForm.attrValueList.forEach((item) =>
+        this.$set(item, "isEdit", false)
+      );
+    },
+
+    //对input失去焦点或者回车，那么切换为查看模式
+    toLook(row) {
+      //1、失去焦点的时候需要判定数据中是否有属性值名称,如果没有值或者值不合法，不会变为span
+      if (row.valueName.trim() === "") {
+        row.valueName = "";
+        return;
+      }
+
+      //2、我们还得判断当前输入的这个属性值名称，在除去自身以外，其余的属性值当中是否存在，如果存在就重复了，不能变为span
+      let isRepeat = this.attrForm.attrValueList.some((item) => {
+        if (item !== row) {
+          return item.valueName === row.valueName;
+        }
+      });
+
+      if (isRepeat) {
+        this.$message.info("输入的属性值名称不能重复");
+        row.valueName = "";
+        return;
+      }
+
+      row.isEdit = false;
+    },
+    //对span进行点击的时候，切换为编辑模式
+    toEdit(row, index) {
+      row.isEdit = true;
+
+      //从span变为input我们需要自动获取焦点
+      //直接写这一行，input标签其实还没有创建成功，所以报错this.$refs[index]是undefined
+      this.$nextTick(() => {
+        this.$refs[index].focus();
+      });
+    },
   },
 };
 </script>

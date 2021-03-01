@@ -43,6 +43,7 @@ export default {
     this.getCategory1List()
   },
   methods:{
+    //请求获取一级分类列表
     async getCategory1List(){
       const result = await this.$API.category.getCategory1()
       if(result.code === 200){
