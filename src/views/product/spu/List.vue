@@ -75,6 +75,7 @@
       <!-- <div>
       </div> -->
       <SkuForm v-show="isShowSkuForm"></SkuForm>
+      
     </el-card>
   </div>
 </template>
