@@ -74,6 +74,7 @@
       <!-- sku的添加页面 -->
       <!-- <div>
       </div> -->
+      
       <SkuForm v-show="isShowSkuForm"></SkuForm>
       
     </el-card>
