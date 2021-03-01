@@ -2,7 +2,7 @@
   <div>
     <el-card>
       <!-- 三级联动组件 -->
-      <CategorySelector @handlerCategory="handlerCategory"></CategorySelector>
+      <CategorySelector @handlerCategory="handlerCategory" :isShowList="isShowList"></CategorySelector>
     </el-card>
 
     <el-card style="margin-top: 20px">
@@ -42,12 +42,16 @@
                 size="mini"
                 @click="showUpdateDiv(row)"
               ></HintButton>
-              <HintButton
-                type="danger"
-                icon="el-icon-delete"
-                title="删除"
-                size="mini"
-              ></HintButton>
+
+              <el-popconfirm :title="`你确定要删除${row.attrName}吗？`" @onConfirm="deleteAttr(row)">
+                <HintButton
+                  slot="reference"
+                  type="danger"
+                  icon="el-icon-delete"
+                  title="删除"
+                  size="mini"
+                ></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -64,7 +68,7 @@
           </el-form-item>
         </el-form>
 
-        <el-button type="primary" icon="el-icon-plus" @click="addAttrValue"
+        <el-button type="primary" icon="el-icon-plus" @click="addAttrValue" :disabled="!attrForm.attrName"
           >添加属性值</el-button
         >
         <el-button @click="isShowList = true">取消</el-button>
@@ -106,7 +110,7 @@
             <template slot-scope="{ row, $index }">
               <el-popconfirm
                 :title="`你确定要删除${row.valueName}这个属性值吗？`"
-                @onConfirm="attrForm.attrValueList.splice($index,1)"
+                @onConfirm="attrForm.attrValueList.splice($index, 1)"
               >
                 <!-- onConfirm点击气泡确认框的确定按钮，会触发一个事件，事件名称是onConfirm，官网写错了 -->
                 <HintButton
@@ -121,7 +125,7 @@
           </el-table-column>
         </el-table>
 
-        <el-button type="primary">保存</el-button>
+        <el-button type="primary" @click="save" :disabled="attrForm.attrValueList.length===0">保存</el-button>
         <el-button @click="isShowList = true">取消</el-button>
       </div>
     </el-card>
@@ -278,6 +282,48 @@ export default {
         this.$refs[index].focus();
       });
     },
+
+    //保存属性操作
+    async save() {
+      //1、获取参数
+      let attr = this.attrForm;
+      //2、整理参数
+      // 1、属性值名称如果为空串，从属性值列表当中去除
+      // 2、属性值当中去除isEdit属性,这个isEdit是我们后面自己添加用来标识查看模式和编辑模式的
+      attr.attrValueList = attr.attrValueList.filter((item) => {
+        if (item.valueName !== "") {
+          delete item.isEdit;
+          return true;
+        }
+      });
+      // 3、属性值列表如果没有属性值，不发请求
+      if (attr.attrValueList.length === 0) {
+        this.$message.info("属性值列表必须有属性值才能保存");
+        return;
+      }
+      //3、发请求
+      try {
+        //4、成功干嘛
+        await this.$API.attr.addOrUpdate(attr);
+        this.$message.success("保存属性成功");
+        this.isShowList = true;
+        this.getAttrList();
+      } catch (error) {
+        //5、失败干嘛
+        this.$message.error("保存属性失败" + error.message);
+      }
+    },
+
+    //删除属性操作
+    async deleteAttr(row){
+      try {
+        await this.$API.attr.delete(row.id)
+        this.$message.success('删除属性成功')
+        this.getAttrList()
+      } catch (error) {
+        this.$message.error('删除属性失败')
+      }
+    }
   },
 };
 </script>
