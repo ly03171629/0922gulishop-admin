@@ -69,14 +69,13 @@
       <!-- spu的添加和修改页面 -->
       <!-- <div> 
       </div> -->
-      <SpuForm v-show="isShowSpuForm"></SpuForm>
+      <!-- <SpuForm v-show="isShowSpuForm" :visible="isShowSpuForm" @update:visible="isShowSpuForm = $event"></SpuForm> -->
+      <SpuForm v-show="isShowSpuForm" :visible.sync="isShowSpuForm" ref="spu" ></SpuForm>
 
       <!-- sku的添加页面 -->
       <!-- <div>
       </div> -->
-      
       <SkuForm v-show="isShowSkuForm"></SkuForm>
-      
     </el-card>
   </div>
 </template>
@@ -147,10 +146,13 @@ export default {
     //点击添加SPU的回调，显示SPU的添加页面
     showAddSpuForm(){
       this.isShowSpuForm = true
+      //获取到子组件对象，调用子组件里面的方法，进行发请求
+      this.$refs.spu.getAddSpuFormInitData()
     },
     //点击修改spu的回调，显示Spu的修改页面（其实和添加是同一个页面）
     showUpdateSpuForm(row){
       this.isShowSpuForm = true
+      this.$refs.spu.getUpdateSpuFormInitData(row)
     },
     //点击添加SKU的回调，显示添加SKU的页面
     showAddSkuForm(row){

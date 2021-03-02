@@ -279,9 +279,25 @@ export default {
       //从span变为input我们需要自动获取焦点
       //直接写这一行，input标签其实还没有创建成功，所以报错this.$refs[index]是undefined
       this.$nextTick(() => {
+        // this.$refs[index]    this.$refs.xxx
         this.$refs[index].focus();
       });
     },
+
+    //对象的点语法和[]语法
+    // var obj = {
+    //   "aa-bb":'cc',
+    //   username:'zly',
+    //   age:33
+    // }
+
+    // obj.aa-bb //错的  aa-bb名字不合法
+    // obj["aa-bb"] //对的
+    
+    // var xx = 'username'
+    // // obj.xx //错的  相当于是xx在obj里面是属性
+    // // obj[xx] //对的  最终计算完obj[“username”] === obj.username
+
 
     //保存属性操作
     async save() {
