@@ -29,11 +29,12 @@
       <el-form-item label="SPU图片" label-width="100px">
         <!-- :file-list="fileList" 指定我们图片展示的是哪个数组 -->
         <el-upload
-          action="https://jsonplaceholder.typicode.com/posts/"
+          action="/dev-api/admin/product/fileUpload"
           list-type="picture-card"
           :file-list="spuImageList"
           :on-preview="handlePictureCardPreview"
           :on-remove="handleRemove"
+          :on-success="handlePictureSuccess"
         >
           <i class="el-icon-plus"></i>
         </el-upload>
@@ -43,10 +44,23 @@
       </el-form-item>
 
       <el-form-item label="销售属性" label-width="100px">
-        <el-select value="" placeholder="还有1未选择">
-          <el-option label="label" value="value"></el-option>
+        <el-select
+          v-model="unUseSaleAttrIdName"
+          :placeholder="
+            unUseSaleAttrList.length > 0
+              ? `还有${unUseSaleAttrList.length}未选择`
+              : '没有啦！！！'
+          "
+        >
+          <el-option
+            :label="unUseSaleAttr.name"
+            :value="`${unUseSaleAttr.id}:${unUseSaleAttr.name}`"
+            v-for="(unUseSaleAttr, index) in unUseSaleAttrList"
+            :key="unUseSaleAttr.id"
+          ></el-option>
         </el-select>
-        <el-button type="primary" icon="el-icon-plus">添加销售属性</el-button>
+
+        <el-button type="primary" icon="el-icon-plus" @click="addSaleAttr" :disabled="!unUseSaleAttrIdName">添加销售属性</el-button>
         <el-table border style="width: 100%" :data="spuForm.spuSaleAttrList">
           <el-table-column type="index" align="center" label="序号" width="80">
           </el-table-column>
@@ -58,33 +72,37 @@
               <el-tag
                 closable
                 :disable-transitions="false"
-                v-for="(saleAttrValue, index) in row.spuSaleAttrValueList" :key="saleAttrValue.id"
+                v-for="(saleAttrValue, index) in row.spuSaleAttrValueList"
+                :key="saleAttrValue.id"
               >
-                {{ saleAttrValue.saleAttrValueName}}
+                {{ saleAttrValue.saleAttrValueName }}
               </el-tag>
 
-              <!--  @keyup.enter.native="handleInputConfirm"
-                @blur="handleInputConfirm" -->
+              <!--   -->
               <el-input
                 class="input-new-tag"
                 v-if="row.inputVisible"
                 v-model="row.inputValue"
                 ref="saveTagInput"
                 size="small"
+                @keyup.enter.native="handleInputConfirm(row)"
+                @blur="handleInputConfirm(row)"
               >
               </el-input>
-              <!-- @click="showInput" -->
-              <el-button
-                v-else
-                class="button-new-tag"
-                size="small"
-                >+ New Tag</el-button
+              <!--  -->
+              <el-button v-else class="button-new-tag" size="small" @click="showInput(row)"
+                >添加</el-button
               >
             </template>
           </el-table-column>
           <el-table-column prop="prop" label="操作" width="150">
-            <template slot-scope="{row,$index}">
-              <HintButton type="danger" icon="el-icon-delete" size="mini" title="删除销售属性"></HintButton>
+            <template slot-scope="{ row, $index }">
+              <HintButton
+                type="danger"
+                icon="el-icon-delete"
+                size="mini"
+                title="删除销售属性"
+              ></HintButton>
             </template>
           </el-table-column>
         </el-table>
@@ -128,14 +146,14 @@ export default {
           //   saleAttrName: "string",
           //   spuId: 0,
           //   spuSaleAttrValueList: [
-          //     {
-          //       baseSaleAttrId: 0,
-          //       id: 0,
-          //       isChecked: "string",
-          //       saleAttrName: "string",
-          //       saleAttrValueName: "string",
-          //       spuId: 0,
-          //     },
+              // {
+              //   baseSaleAttrId: 0,
+              //   id: 0,
+              //   isChecked: "string",
+              //   saleAttrName: "string",
+              //   saleAttrValueName: "string",
+              //   spuId: 0,
+              // },
           //   ],
           // },
         ],
@@ -156,16 +174,29 @@ export default {
       spuImageList: [], //请求初始化的spu图片列表
       trademarkList: [], //请求初始化的所有品牌列表
       saleAttrList: [], //请求初始化的所有的销售属性列表
+
+      unUseSaleAttrIdName: "", //收集的选择未使用的销售属性的id和name
     };
   },
   methods: {
-    // 和upload相关的回调函数
+    // 和upload相关的回调函数，对应删除图片成功后的回调，对应的就是图片的垃圾筐
     handleRemove(file, fileList) {
-      console.log(file, fileList);
+      // 删除图片的时候我们需要收集新的图片列表
+      // console.log(file, fileList);
+      this.spuImageList = fileList
     },
+
+    //这个方法代表上传成功后的回调
+    handlePictureSuccess(res,file,fileList){
+      //上传成功，也得把最后的图片列表收集起来
+      console.log(fileList);
+      this.spuImageList = fileList
+    },
+
+    //这个方法是预览大图使用，已经写好，不用动，对应的就是图片的放大镜
     handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url;
-      this.dialogVisible = true;
+      this.dialogImageUrl = file.url; //把需要放大的图片src赋值到对话框当中的图片
+      this.dialogVisible = true; //弹出放大图片的对话框
     },
 
     //请求获取修改spu的初始化数据
@@ -223,24 +254,99 @@ export default {
         this.saleAttrList = saleAttrResult.data;
       }
     },
+    //点击添加销售属性
+    addSaleAttr(){
+      //点击按钮，通过刚才选择select收集到的数据，获取收集到的销售属性id和name
+      let [baseSaleAttrId,saleAttrName] = this.unUseSaleAttrIdName.split(':')
+      // 把收集到的数据变为要添加的对象格式
+      let obj = {
+        baseSaleAttrId,
+        saleAttrName,
+        spuSaleAttrValueList: []
+      }
+      // 把销售属性对象添加到spu的销售属性列表当中
+      this.spuForm.spuSaleAttrList.push(obj)
+
+      this.unUseSaleAttrIdName = '' //清空收集的数据
+    },
+    //点击销售属性值列表当中的添加按钮
+    showInput(row){
+      // row.inputVisible = true
+      this.$set(row,'inputVisible',true)
+
+      //自动获取焦点
+      this.$nextTick(() => {
+        this.$refs.saveTagInput.focus()
+      })
+    },
+    //当用户输入销售属性值完成后失去焦点或者回车的回调
+    handleInputConfirm(row){
+      let saleAttrValueName = row.inputValue
+      let baseSaleAttrId = row.baseSaleAttrId
+
+      //拿到属性值名称，判断是否是空串
+      if(saleAttrValueName.trim() === ''){
+        row.inputValue = ''
+        return
+      }
+      //判断当前这个销售属性值名称是否已经在销售属性值列表当中存在，这里不需要除去自身
+      //因为我们现在还没有把这个销售属性值添加到指定的位置
+      //之前平台属性要去除去自身，因为之前我们平台属性用的是占位思想，还没有输入平台属性值名称，就已经添加了这个平台属性值，因此要出去自身
+      let isRepeat = row.spuSaleAttrValueList.some(item => item.saleAttrValueName === saleAttrValueName)
+      if(isRepeat){
+        this.$message.info('销售属性值名称不能重复')
+        row.inputValue = ''
+        return
+      }
+
+      //销售属性值名称没问题，我们就构造成我们需要的销售属性值对象
+      let obj = {
+        saleAttrValueName,
+        baseSaleAttrId
+      }
+
+      row.spuSaleAttrValueList.push(obj) //把销售属性值添加到指定的销售属性值列表
+
+      //把input再变为按钮
+      row.inputVisible = false
+
+      //将input当中的数据清空
+      row.inputValue = '' 
+    }
+  },
+  computed: {
+    //根据请求获取的所有的销售属性列表saleAttrList和spu详情当中自己的销售属性列表spuForm.spuSaleAttrList 计算得到未选择的销售属性列表
+    unUseSaleAttrList() {
+      //从所有的销售属性列表当中过滤，不在spu自己的销售属性列表当中的 所有销售属性
+      // return this.saleAttrList.filter(saleAttr => {
+      //   return this.spuForm.spuSaleAttrList.every(spuSaleAttr => {
+      //     return spuSaleAttr.saleAttrName !== saleAttr.name
+      //   })
+      // })
+      return this.saleAttrList.filter((saleAttr) =>
+        this.spuForm.spuSaleAttrList.every(
+          (spuSaleAttr) => spuSaleAttr.saleAttrName !== saleAttr.name
+        )
+      );
+    },
   },
 };
 </script>
 
 <style>
-  .el-tag + .el-tag {
-    margin-left: 10px;
-  }
-  .button-new-tag {
-    margin-left: 10px;
-    height: 32px;
-    line-height: 30px;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-  .input-new-tag {
-    width: 90px;
-    margin-left: 10px;
-    vertical-align: bottom;
-  }
+.el-tag + .el-tag {
+  margin-left: 10px;
+}
+.button-new-tag {
+  margin-left: 10px;
+  height: 32px;
+  line-height: 30px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.input-new-tag {
+  width: 90px;
+  margin-left: 10px;
+  vertical-align: bottom;
+}
 </style>
