@@ -60,7 +60,13 @@
           ></el-option>
         </el-select>
 
-        <el-button type="primary" icon="el-icon-plus" @click="addSaleAttr" :disabled="!unUseSaleAttrIdName">添加销售属性</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          @click="addSaleAttr"
+          :disabled="!unUseSaleAttrIdName"
+          >添加销售属性</el-button
+        >
         <el-table border style="width: 100%" :data="spuForm.spuSaleAttrList">
           <el-table-column type="index" align="center" label="序号" width="80">
           </el-table-column>
@@ -68,17 +74,20 @@
           </el-table-column>
           <el-table-column prop="prop" label="属性值名称列表" width="width">
             <template slot-scope="{ row, $index }">
-              <!--  @close="handleClose(tag)"点击×的回调 -->
+              <!--  "点击×的回调 -->
               <el-tag
                 closable
                 :disable-transitions="false"
                 v-for="(saleAttrValue, index) in row.spuSaleAttrValueList"
                 :key="saleAttrValue.id"
+                @close="row.spuSaleAttrValueList.splice(index, 1)"
               >
                 {{ saleAttrValue.saleAttrValueName }}
               </el-tag>
 
-              <!--   -->
+              <!-- v-model="row.inputValue" 
+              inputValue必须是输入了数据，row身上才有这个属性
+              如果用户没有输入数据，那么row身上开始是不存在这个属性的-->
               <el-input
                 class="input-new-tag"
                 v-if="row.inputVisible"
@@ -90,7 +99,11 @@
               >
               </el-input>
               <!--  -->
-              <el-button v-else class="button-new-tag" size="small" @click="showInput(row)"
+              <el-button
+                v-else
+                class="button-new-tag"
+                size="small"
+                @click="showInput(row)"
                 >添加</el-button
               >
             </template>
@@ -102,6 +115,7 @@
                 icon="el-icon-delete"
                 size="mini"
                 title="删除销售属性"
+                @click="spuForm.spuSaleAttrList.splice($index, 1)"
               ></HintButton>
             </template>
           </el-table-column>
@@ -109,8 +123,8 @@
       </el-form-item>
 
       <el-form-item label-width="100px">
-        <el-button type="primary">保存</el-button>
-        <el-button @click="$emit('update:visible', false)">取消</el-button>
+        <el-button type="primary" @click="save">保存</el-button>
+        <el-button @click="cancel">取消</el-button>
       </el-form-item>
     </el-form>
   </div>
@@ -126,6 +140,7 @@ export default {
       dialogImageUrl: "",
       dialogVisible: false,
 
+      category3Id:'',
       spuForm: {
         category3Id: "",
         description: "",
@@ -200,7 +215,8 @@ export default {
     },
 
     //请求获取修改spu的初始化数据
-    async getUpdateSpuFormInitData(spu) {
+    async getUpdateSpuFormInitData(spu,category3Id) {
+      this.category3Id = category3Id
       //发4个请求
       //根据spu的id获取spu的详情
       //http://localhost:9529/dev-api/admin/product/getSpuById/4
@@ -238,7 +254,8 @@ export default {
     },
 
     //请求获取添加spu的初始化数据
-    async getAddSpuFormInitData() {
+    async getAddSpuFormInitData(category3Id) {
+      this.category3Id = category3Id
       //发两个请求
       //获取所有的品牌列表
       //http://localhost:9529/dev-api/admin/product/baseTrademark/getTrademarkList
@@ -269,10 +286,14 @@ export default {
 
       this.unUseSaleAttrIdName = '' //清空收集的数据
     },
+
+
     //点击销售属性值列表当中的添加按钮
     showInput(row){
       // row.inputVisible = true
       this.$set(row,'inputVisible',true)
+
+      this.$set(row,'inputValue','')  //点击切换input的时候，保证row身上有inputValue属性，不至于拿到undefined
 
       //自动获取焦点
       this.$nextTick(() => {
@@ -312,6 +333,87 @@ export default {
 
       //将input当中的数据清空
       row.inputValue = '' 
+    },
+
+    //添加spu或者修改spu的保存操作
+    async save(){
+      //1、获取参数数据
+      let {spuForm,spuImageList,category3Id} = this
+      //2、整理参数
+      //整理category3Id
+      spuForm.category3Id = category3Id
+
+      //整理图片列表
+      //图片列表当中的图片必须是这样的结构
+      // {
+      //   imgName: "string",
+      //   imgUrl: "string",
+      // },
+      //目前我们的图片列表数据结构，前面已经说过
+      //包含之前已经有的和自己最近上传的
+      //之前已经有的图片内部是有imgName和imgUrl,它也有name和url,而自己上传的只有name和url（错的）
+      // map方法是会根据老的数组生成一个新的数组，新的数组内部每一项和对应的老数组没一项有关系
+      spuImageList = spuImageList.map(item => {
+        return {
+          imgName:item.name,
+          imgUrl:item.imgUrl || item.response.data//(自己新上传的图片路径)
+        }
+      })
+
+      spuForm.spuImageList = spuImageList
+
+
+      //整理销售属性，去除销售属性身上不需要的数据
+      spuForm.spuSaleAttrList.forEach(item => {
+        delete item.inputVisible
+        delete item.inputValue
+      })
+
+      //3、发请求
+      try {
+        //4、成功干啥
+        await this.$API.spu.addUpdate(spuForm)
+        //提示
+        this.$message.success('保存spu成功')
+        //返回到列表页
+        this.$emit('update:visible',false)
+        //通知返回列表页成功，在列表页发请求重新获取列表数据
+        this.$emit('backSuccess')
+        //返回成功后把当前spuform页面的数据清空
+        this.resetData()
+      } catch (error) {
+        //5、失败干啥
+        //提示
+        this.$message.error('保存spu失败')
+      }
+    },
+    //重置data数据
+    resetData(){
+      this.dialogImageUrl = ""
+      this.dialogVisible = false
+      this.category3Id = ''
+      this.spuForm =  {
+        category3Id: "",
+        description: "",
+        spuImageList: [],
+        spuName: "",
+        spuSaleAttrList: [],
+        tmId: "",
+      }
+      this.spuImageList = []
+      this.trademarkList = []
+      this.saleAttrList = []
+      this.unUseSaleAttrIdName = ""
+    },
+    
+    //点击取消
+    cancel(){
+      //返回到列表页
+      this.$emit('update:visible',false)
+      //通知父组件回来
+      this.$emit('cancelSuccess')
+      //清空数据
+      this.resetData()
     }
   },
   computed: {
