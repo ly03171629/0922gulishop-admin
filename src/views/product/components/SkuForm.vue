@@ -254,6 +254,7 @@ export default {
       // imgUrl:"http://47.93.148.192:8080/group1/M00/00/02/rBHu8l-sklaAPVqkAAEoiSa9WoM463.jpg"
       // isDefault:"0"
       // spuId:4
+      
       skuImageList = skuImageList.map((item) => {
         return {
           imgName: item.imgName,

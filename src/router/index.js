@@ -86,6 +86,12 @@ export const constantRoutes = [
         component:() => import('@/views/product/sku/List'),
         name:'Sku',
         meta: { title: 'SKU管理' }
+      },
+      {
+        path:'category/list',
+        component:() => import('@/views/product/category/List'),
+        name:'Category',
+        meta: { title: '分类管理' }
       }
     ]
   },

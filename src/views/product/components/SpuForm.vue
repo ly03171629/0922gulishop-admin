@@ -362,7 +362,6 @@ export default {
 
       spuForm.spuImageList = spuImageList
 
-
       //整理销售属性，去除销售属性身上不需要的数据
       spuForm.spuSaleAttrList.forEach(item => {
         delete item.inputVisible
