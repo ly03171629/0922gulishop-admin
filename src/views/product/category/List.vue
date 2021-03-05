@@ -2,14 +2,22 @@
   <div>
     <el-table
       border
-      lazy
       :data="categorys"
-      :load="load"
       style="width: 900px;margin-bottom: 20px;"
-      :row-key="getRowKey"
+
+      lazy
+      :load="load"
       :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
+      :row-key="getRowKey"
       :row-class-name="tableRowClassName"
     >
+    <!-- 
+      lazy代表是否懒加载
+      :load="load"  懒加载的回调
+      :tree-props 固定写法  是否是树型 前面有没有>
+      :row-key="getRowKey"  设置表格当中每行的标识数据key
+      :row-class-name="tableRowClassName" 为我们的行设置单独的样式
+    -->
       <el-table-column
         prop="id"
         label="分类ID"

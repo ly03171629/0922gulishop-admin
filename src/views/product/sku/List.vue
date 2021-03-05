@@ -243,6 +243,7 @@ export default {
 </script>
 <style lang="scss">
 /* 不加scoped, 可以影响子组件 */
+// 添加.sku-list的目的是把所写的样式限定在本组件和本组件的子组件内部,而且不受scoped约束
 // .sku-list {
 //   .el-carousel__indicator {
 //     button {
@@ -262,34 +263,18 @@ export default {
 </style>
 
 <style lang="scss" scoped>
-/*
-    同样都是在加了scoped的样式当中
-    有些直接添加样式就生效，而有些直接添加样式就不生效
-    只要生效的，我们的样式都是直接作用在根元素身上的 .el-row   .el-col 
+// scoped 我们当前组件的样式就被限制在本组件内部，无法影响其它组件
+// 深度作用选择器  
+    // scoped本身把样式限制在本组件和子组件的根元素，如果样式是作用在子组件非根元素身上，就不生效
+    // 深度作用选择器的作用就是让scoped内部的样式也能作用于子组件非根元素的元素  
 
-    只要是不生效的，证明这个元素根本不是组件内部的根元素  .el-carousel__indicator不是子组件的根元素
-    因此这个样式没法作用在它身上
-
-    一句话：scoped只能把样式作用延长到自身元素还有子组件的根元素身上
-    如果在scoped书写的样式，刚好是作用在子组件的根元素身上，就会生效
-    如果在scoped书写的样式，不是作用在子组件跟标签而是子组件根元素内部元素身上，就不会生效
-  */
-
-/*
-  加了scoped，还想让子组件根元素内部元素的样式生效
-  1、把子组件内部元素的样式重新写一个style写
-  2、深度作用选择器的写法 
-    如果是原生css 深度作用选择器  
-        父元素 >>> 选中的元素 
-    如果是less  scss 预编译的css文件
-        /deep/ 用于less
-        ::v-deep  都行
-   */
-
-  // 添加深度作用选择器css怎么处理的
-  // 不加添加深度作用选择器的时候，scoped的唯一标识会作为属性选择器添加在css选择器最右侧选中的元素身上，去限制
-  // 添加了深度作用选择器的时候，scoped的唯一标识会作为属性选择器添加在css选择器最左侧元素身上，限制不了选中的元素
-
+/*深度作用选择器的写法    ********************
+  如果是原生css 深度作用选择器  
+      父元素 >>> 选中的元素 
+  如果是less  scss 预编译的css文件
+      /deep/ 用于less
+      ::v-deep  都行
+      */
 .sku-list {
   .el-row {
     height: 40px;
@@ -311,20 +296,19 @@ export default {
       width: 400px;
       height: 400px;
     }
+  }
 
-    
-    ::v-deep .el-carousel__indicator{
-      button {
-        border-radius: 50%;
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        background-color: hotpink;
-      }
-      &.is-active {
-        button {
-          background-color: green;
-        }
+  ::v-deep .el-carousel__indicator{
+    button{
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: hotpink;
+    }
+    &.is-active{
+      button{
+        background-color: purple;
       }
     }
   }
