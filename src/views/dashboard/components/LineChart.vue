@@ -1,14 +1,21 @@
 <template>
-  <!-- 准备的容器 -->
   <div :style="{ width, height }"></div>
 </template>
 
 <script>
-import echarts from "echarts";
-require("echarts/theme/macarons"); // echarts theme 只能写require
+import echarts from "echarts"; //引入echarts
+require("echarts/theme/macarons"); //引入主题
 import resize from './mixins/resize'
 export default {
-  mixins:[resize],
+  mixins: [resize],
+  name: "",
+  data() {
+    return {
+      chart: null,
+      // $_sidebarElm: null, // sizebar根元素
+      // $_resizeHandler: null // 更新图表的函数
+    };
+  },
   props: {
     width: {
       type: String,
@@ -18,105 +25,113 @@ export default {
       type: String,
       default: "350px",
     },
-    // 传递的系列数据
-    chartData:{
-      type:Object,
-      required :true
+    chartData: {
+      type: Object,
+      required: true,
     },
-    // y轴的名称
-    yTittle:{
-      type:String,
-      required :true
-    }
+    yTittle: {
+      type: String,
+      required: true,
+    },
   },
-  data() {
-    return {
-      chart: null,
-    };
+  mounted() {
+    //使用echart画图的函数
+    this.initChart();
+    
   },
 
-  mounted() {
-    this.initChart();
+  //为啥要监视，因为数据是异步传过来的
+  watch:{
+    chartData:{
+      deep:true,
+      handler(newVal){
+        this.setOption(newVal)
+      }
+    }
+  },
+
+  beforeDestroy() {
+    if (!this.chart) {
+      return
+    }
+    // 销毁实例，销毁后实例无法再被使用。
+    this.chart.dispose()
+    this.chart = null
   },
 
   methods: {
-    //初始化一个echarts实例
     initChart() {
       this.chart = echarts.init(this.$el, "macarons");
       this.setOption(this.chartData);
     },
 
-    setOption({expectedData=[],actualData=[]}) {
+    setOption({ expectedData = [], actualData = [] }) {
       this.chart.setOption({
-        // 图表标题
+        //图表的标题
         // title: {
         //   text: "ECharts 入门示例",
         // },
-        //提示信息
+        //提示
         tooltip: {
-          // 提示信息是十字准星
+          trigger:'axis',//坐标轴触发，主要在柱状图，折线图等会使用类目轴的图表中使用。
           axisPointer:{
-            type:'cross' //十字准星指示器。其实是种简写，表示启用两个正交的轴的 axisPointer。
-          },
-          trigger:'axis' //提示信息触发的时机，坐标轴触发，主要在柱状图，折线图等会使用类目轴的图表中使用。
+            type:'cross' //坐标十字准星指示器。其实是种简写，表示启用两个正交的轴的 axisPointer
+          }
         },
 
         //图例
         legend: {
-          data: ["预期", "实际"],
+          data: ["期望", "实际"],
         },
-        //x轴
+        //x坐标轴
         xAxis: {
-          boundaryGap:false, //坐标轴两边留白策略
           data: ["周一", "周二", "周三", "周四", "周五", "周六","周日"],
+          boundaryGap:false //x轴是否两遍不留白，和边缘重合
         },
-        //y轴 一般不需要写数据
+        //y坐标轴，一般不写，最多写个y名称
         yAxis: {
-          name:this.yTittle  //y轴的名称
+          name:this.yTittle
         },
-        //直角坐标系内绘图网格,可以控制图和容器上下左右的边距
+        //网格，用来设置图标整体的大小的
         grid:{
-          left:40,
-          right:20,
-          top:40,
-          bottom:40
+          left: 10,
+          right: 10,
+          top: 40,
+          bottom:10,
+          containLabel:true   //是否包含图标的坐标轴
         },
 
-        //系列
+        //系列  （图例和系列是配套的）
         series: [
           {
-            //图形的颜色
+            name: "期望", //和图例对应的
+            type: "line", //决定了图的样子  是柱状图还是线状图还是饼状图
+            data: expectedData, //对应的是图的数据
             itemStyle:{
-              color:'hotpink'
+              color:'red'   //修改整个图相关的颜色 不光是线，还有提示还有图例颜色都改了
             },
-            name: "预期",
-            type: "line", //柱状图
-            data: expectedData,
+            lineStyle:{
+              width:4 //只能修改线的颜色宽度等等
+            }
           },
           {
             name: "实际",
+            type: "line",
+            data: actualData,
             itemStyle:{
-              color:'skyblue'
+              color:'blue'
             },
-            //区域填充样式
+            lineStyle:{
+              width:4
+            },
             areaStyle:{
-              color:'#aaa'
-            },
-            type: "line", //折线图
-            data: actualData
+              color:'hotpink'   //修改区域的颜色
+            }
           },
         ],
       });
     },
   },
-
-  watch:{
-    chartData:{
-      deep:true,
-      handler(newVal,oldVal){
-        this.setOption(newVal)
-      }
-    }
-  }
 };
 </script>
+

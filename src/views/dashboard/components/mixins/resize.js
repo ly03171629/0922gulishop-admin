@@ -1,5 +1,5 @@
 // import { debounce } from '@/utils'
-import debounce from 'lodash/debounce'
+import debounce from 'lodash/debounce' //防抖
 
 export default {
   
@@ -14,7 +14,7 @@ export default {
     // 定义并保存更新图表的函数
     this.$_resizeHandler = debounce(() => {// 函数防抖, 避免频繁更新图表
       if (this.chart) { // 使用echarts的组件
-        this.chart.resize()
+        this.chart.resize() //重新加载图表
       } else if (this.$refs.chart) { // 使用v-chart的组件
         this.$refs.chart.resize()
       }
@@ -32,24 +32,7 @@ export default {
     this.$_destroyResizeEvent()
     this.$_destroySidebarResizeEvent()
   },
-
-  /* 
-  再次访问路由时的回调 ==> 重新绑定窗口和sizebar的resize事件监听
-  */
-  // to fixed bug when cached by keep-alive
-  // https://github.com/PanJiaChen/vue-element-admin/issues/2116
-  activated() {
-    this.$_initResizeEvent()
-    this.$_initSidebarResizeEvent()
-  },
-
-  /* 
-  路由离开失活时的回调 ==> 解绑窗口和sidebar的resize事件监听
-  */
-  deactivated() {
-    this.$_destroyResizeEvent()
-    this.$_destroySidebarResizeEvent()
-  },
+  
 
   methods: {
     /* 
@@ -91,5 +74,24 @@ export default {
     $_destroySidebarResizeEvent() {
       this.$_sidebarElm && this.$_sidebarElm.removeEventListener('transitionend', this.$_sidebarResizeHandler)
     }
+  },
+
+
+  /* 
+  再次访问路由时的回调 ==> 重新绑定窗口和sizebar的resize事件监听
+  */
+  // to fixed bug when cached by keep-alive
+  // https://github.com/PanJiaChen/vue-element-admin/issues/2116
+  activated() {
+    this.$_initResizeEvent()
+    this.$_initSidebarResizeEvent()
+  },
+
+  /* 
+  路由离开失活时的回调 ==> 解绑窗口和sidebar的resize事件监听
+  */
+  deactivated() {
+    this.$_destroyResizeEvent()
+    this.$_destroySidebarResizeEvent()
   }
 }
