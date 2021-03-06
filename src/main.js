@@ -27,6 +27,9 @@ import * as API from '@/api/product'
 import CategorySelector from '@/components/CategorySelector'
 import HintButton from '@/components/HintButton'
 
+import '@/plugins/vcharts'
+
+
 Vue.component('CategorySelector',CategorySelector)
 Vue.component('HintButton',HintButton)
 
