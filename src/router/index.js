@@ -60,6 +60,53 @@ export const constantRoutes = [
 
 //存储的是需要权限数据控制的所有路由，后期需要从这个里面根据用户权限数据过滤出用户需要的路由进行动态配置
 export const allAsyncRoutes = [
+  //权限数据管理相关的路由
+  {
+    name: 'Acl',
+    path: '/acl',
+    component: Layout,
+    redirect: '/acl/user/list',
+    meta: { 
+      title: '权限管理', 
+      icon: 'el-icon-lock' 
+    },
+    children: [
+      {
+        name: 'User',
+        path: 'user/list',
+        component: () => import('@/views/acl/user/list'),
+        meta: { 
+          title: '用户管理', 
+        },
+      },
+      {
+        name: 'Role',
+        path: 'role/list',
+        component: () => import('@/views/acl/role/list'),
+        meta: { 
+          title: '角色管理', 
+        },
+      },
+      {
+        name: 'RoleAuth',
+        path: 'role/auth/:id',
+        component: () => import('@/views/acl/role/roleAuth'),
+        meta: {
+          activeMenu: '/acl/role/list',
+          title: '角色授权',
+        },
+        hidden: true,
+      },
+      {
+        name: 'Permission',
+        path: 'permission/list',
+        component: () => import('@/views/acl/permission/list'),
+        meta: { 
+          title: '菜单管理',
+        },
+      },
+    ]
+  },
   //配置商品管理相关的路由
   {
     path:'/product',  //一级路由组件只有两个要么是登录login组件  要么就是layout组件
@@ -107,6 +154,30 @@ export const allAsyncRoutes = [
     ]
   },
 
+  //自己添加的一个测试菜单路由
+  {
+    path:'/test',  //一级路由组件只有两个要么是登录login组件  要么就是layout组件
+    component: Layout, //显示一级路由组件架子，并且立马重定向二级路由组件
+    name:'Test', //name必须写，而且必须写的是路径的首字母大写。因为后面权限要用
+    redirect: '/test/test111/list',
+    meta: { title: '测试管理', icon: 'el-icon-s-tools' },
+    children:[
+      {
+        path:'test111/list',
+        component:() => import('@/views/test/test111/List'),
+        name:'Test111',
+        meta: { title: '测试1' }
+      },
+      {
+        path:'test222/list',
+        component:() => import('@/views/test/test222/List'),
+        name:'Test222',
+        meta: { title: '测试2' }
+      }
+      
+    ]
+  },
+
 ]
 
 //任意路由，当用户随意的输入一个路径，那么应该显示404 ，任意路由必须是注册在最后一个
@@ -117,6 +188,7 @@ export const anyRoute = { path: '*', redirect: '/404', hidden: true }
 
 const createRouter = () => new Router({
   // mode: 'history', // require service support
+  mode:'history',
   scrollBehavior: () => ({ y: 0 }),
   routes: constantRoutes  
   //一开始没做权限的时候，这里面只有常量路由，要做权限操作，后面是需要动态的往这个路由配置数组当中添加用户自己的异步路由和任意路由

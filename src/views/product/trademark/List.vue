@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-button type="primary" icon="el-icon-plus" @click="showAddDialog"
+    v-if="$hasBP('btn.Trademark.add')"
       >添加</el-button
     >
 
@@ -50,6 +51,7 @@
             icon="el-icon-edit"
             size="mini"
             @click="showUpdateDialog(row)"
+            v-if="$hasBP('btn.Trademark.update')"
             >修改</el-button
           >
           <el-button
@@ -57,6 +59,7 @@
             icon="el-icon-delete"
             size="mini"
             @click="deleteTrademark(row)"
+            v-if="$hasBP('btn.Trademark.remove')"
             >删除</el-button
           >
         </template>

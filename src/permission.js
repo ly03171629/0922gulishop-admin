@@ -35,7 +35,10 @@ router.beforeEach(async(to, from, next) => {
         try {
           // get user info
           await store.dispatch('user/getInfo')
-          next()
+          // 之前获取到用户信息之后，直接放行，没问题 next()
+          //现在获取到用户信息之后，是动态添加路由的
+          next({...to})
+          
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')

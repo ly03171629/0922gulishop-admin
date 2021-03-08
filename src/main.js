@@ -23,17 +23,20 @@ import '@/permission' //  引入token校验相关（和权限也有关系）
 // 后期我们还要写attr相关的api，$API内部就没有attr相关的接口
 
 
-import * as API from '@/api/product'
+import * as API from '@/api'
 import CategorySelector from '@/components/CategorySelector'
 import HintButton from '@/components/HintButton'
 
 import '@/plugins/vcharts'
+
+import {hasBtnPermission} from '@/utils/permission'
 
 
 Vue.component('CategorySelector',CategorySelector)
 Vue.component('HintButton',HintButton)
 
 Vue.prototype.$API = API
+Vue.prototype.$hasBP = hasBtnPermission //把检测按钮权限的函数挂在原型上
 // {
 //   trademark,
 //   attr

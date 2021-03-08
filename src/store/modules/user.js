@@ -1,7 +1,8 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo } from '@/api/acl/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { allAsyncRoutes, resetRouter, anyRoute, constantRoutes } from '@/router'
 import router from '@/router'
+import cloneDeep from 'lodash/cloneDeep'
 
 
 const getDefaultState = () => {
@@ -94,7 +95,7 @@ const mutations = {
     state.asyncRoutes = myAsyncRoutes  //把过滤出来自己的异步路由保存起来
     state.routes = constantRoutes.concat(myAsyncRoutes,anyRoute) 
     //使用常量路由拼接自己的异步路由和任意路由，形成自己最终的所有路由数组
-    
+
     
     //现在目前的路由当中只有常量路由，目前我们需要将路由器当中配的路由动态的改变成，我们最终的路由
     //动态往路由器注册添加新的路由
@@ -150,7 +151,14 @@ const actions = {
 
         //还要去根据用户信息返回来的routes（和路由name相关的字符串数组），从所有的异步路由数组当中过滤出用户自己的所有异步路由数组
         // data.routes  它是字符串数组 字符串都是路由的name值组成的   ['Trademark','Attr']
-        commit('SET_ROUTES',filterMyAsyncRoutes(allAsyncRoutes,data.routes))
+
+        
+        //cloneDeep(allAsyncRoutes) 我们最终要改为这样
+        //因为过滤的时候如果是在数据本身上去过滤，那么过滤完成后，数据的二级路由就改变了
+        //数据本身之前的二级路由会被过滤后的二级路由覆盖，想找到就不行了
+        //表现在 先登录其它只有某个二级路由的用户，然后退出登录admin，那么admin也只有那一个二级路由
+
+        commit('SET_ROUTES',filterMyAsyncRoutes(cloneDeep(allAsyncRoutes),data.routes))
         resolve(data)
       }).catch(error => {
         reject(error)
