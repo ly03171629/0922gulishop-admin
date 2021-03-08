@@ -30,6 +30,7 @@ import Layout from '@/layout'
  * a base page that does not have permission requirements
  * all roles can be accessed
  */
+// 常量路由 ，不需要权限数据，就可以使用的路由，对应的菜单就可以操作，任何用户都能操作
 export const constantRoutes = [
   {
     path: '/login',
@@ -43,6 +44,7 @@ export const constantRoutes = [
     hidden: true
   },
 
+  // 首页
   {
     path: '/',
     component: Layout,
@@ -53,8 +55,11 @@ export const constantRoutes = [
       component: () => import('@/views/dashboard/index'),
       meta: { title: '首页', icon: 'dashboard' }
     }]
-  },
+  },  
+]
 
+//存储的是需要权限数据控制的所有路由，后期需要从这个里面根据用户权限数据过滤出用户需要的路由进行动态配置
+export const allAsyncRoutes = [
   //配置商品管理相关的路由
   {
     path:'/product',  //一级路由组件只有两个要么是登录login组件  要么就是layout组件
@@ -102,18 +107,19 @@ export const constantRoutes = [
     ]
   },
 
-
-
-
-
-  // 404 page must be placed at the end !!!
-  { path: '*', redirect: '/404', hidden: true }
 ]
+
+//任意路由，当用户随意的输入一个路径，那么应该显示404 ，任意路由必须是注册在最后一个
+export const anyRoute = { path: '*', redirect: '/404', hidden: true }
+
+
+
 
 const createRouter = () => new Router({
   // mode: 'history', // require service support
   scrollBehavior: () => ({ y: 0 }),
-  routes: constantRoutes
+  routes: constantRoutes  
+  //一开始没做权限的时候，这里面只有常量路由，要做权限操作，后面是需要动态的往这个路由配置数组当中添加用户自己的异步路由和任意路由
 })
 
 const router = createRouter()
